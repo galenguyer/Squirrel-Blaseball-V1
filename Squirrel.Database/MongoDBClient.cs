@@ -18,7 +18,11 @@ namespace Squirrel.Database
         IMongoCollection<RawStreamDataUpdate> _rawUpdates;
         public MongoDBClient(IServiceProvider services)
         {
-            _client = new MongoClient(File.ReadAllText(".mongo"));
+            string connectionString = Environment.GetEnvironmentVariable("MONGO_URI");
+            if (string.IsNullOrEmpty(connectionString))
+                throw new Exception("Need mongodb URI in MONGO_URI env");
+
+            _client = new MongoClient(connectionString);
             _logger = services.GetRequiredService<ILogger>();
             NodaTimeSerializers.Register();
 
@@ -35,6 +39,8 @@ namespace Squirrel.Database
                 .Min(x => x.FirstSeen, update.FirstSeen)
                 .Max(x => x.LastSeen, update.LastSeen);
             await _rawUpdates.UpdateOneAsync(filter, model, new UpdateOptions { IsUpsert = true });
+
+            _logger.Information("Upserted streamData.raw.{Hash}", update.Id);
         }
     }
 }
