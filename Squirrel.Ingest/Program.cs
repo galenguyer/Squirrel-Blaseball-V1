@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
+using Squirrel.Ingest.Workers;
 
 namespace Squirrel.Ingest
 {
@@ -20,7 +21,7 @@ namespace Squirrel.Ingest
         {
             var logger = services.GetRequiredService<ILogger>();
             logger.Information("Starting Ingress Workers");
-            System.Threading.Thread.Sleep(10000);
+            await new StreamDataWorker(services).Start();
         }
     }
 }
