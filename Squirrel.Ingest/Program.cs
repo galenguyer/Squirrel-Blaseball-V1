@@ -12,6 +12,7 @@ namespace Squirrel.Ingest
         {
             IServiceProvider services = new ServiceCollection()
                 .AddSerilog()
+                .AddSquirrelIngest()
                 .BuildServiceProvider();
 
             await HandleIngest(services);

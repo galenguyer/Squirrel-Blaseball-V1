@@ -1,4 +1,5 @@
 ﻿// https://github.com/xSke/Chronicler/blob/main/SIBR.Storage.Ingest/Workers/StreamDataWorker.cs
+using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using System;
 using System.Collections.Generic;
@@ -13,8 +14,7 @@ namespace Squirrel.Ingest.Workers
         private readonly EventStream _eventStream;
         public StreamDataWorker(IServiceProvider services) : base(services)
         {
-            HttpClient _client = new HttpClient();
-            _eventStream = new EventStream(_client, _logger);
+            _eventStream = services.GetRequiredService<EventStream>();
         }
 
         protected override async Task Run()

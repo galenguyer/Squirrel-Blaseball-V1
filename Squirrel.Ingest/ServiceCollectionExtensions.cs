@@ -1,8 +1,10 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using Serilog.Events;
+using Squirrel.Ingest.Workers;
 using System;
 using System.Collections.Generic;
+using System.Net.Http;
 using System.Text;
 
 namespace Squirrel.Ingest
@@ -22,6 +24,19 @@ namespace Squirrel.Ingest
 
             services.AddSingleton<ILogger>(logger);
             return services;
+        }
+
+        public static IServiceCollection AddSquirrelIngest(this IServiceCollection services)
+        {
+            return services
+                .AddSingleton(_ => {
+                    HttpClient client = new HttpClient();
+                    client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent",
+                        "Squirrel/0.1 (https://github.com/galenguyer/squirrel, MasterChief_John-117#1911 on Discord)");
+                    return client;
+                })
+                .AddSingleton<EventStream>()
+                .AddSingleton<StreamDataWorker>();
         }
     }
 }
