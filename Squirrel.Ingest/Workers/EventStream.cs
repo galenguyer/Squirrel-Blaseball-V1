@@ -1,6 +1,7 @@
 ﻿// https://github.com/xSke/Chronicler/blob/main/SIBR.Storage.Ingest/EventStream.cs
 using Serilog;
 using System;
+using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
 
@@ -26,7 +27,23 @@ namespace Squirrel.Ingest.Workers
                 try
                 {
                     _logger.Information("Connecting to stream URL {Url}", uri);
-                    System.Threading.Thread.Sleep(10000);
+                    var response = await _client.GetAsync(uri, HttpCompletionOption.ResponseHeadersRead);
+                    await using var stream = await response.Content.ReadAsStreamAsync();
+
+                    _logger.Information("Connected to stream, receiving data");
+
+                    string str;
+                    using var reader = new StreamReader(stream);
+                    while ((str = await reader.ReadLineAsync()) != null)
+                    {
+                        if (string.IsNullOrWhiteSpace(str))
+                            continue;
+
+                        if (!str.StartsWith(Prefix))
+                            continue;
+
+                        callback(str.Substring(Prefix.Length));
+                    }
                 }
                 catch (Exception e)
                 {

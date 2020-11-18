@@ -23,7 +23,7 @@ namespace Squirrel.Ingest.Workers
             {
                 try
                 {
-                    Console.WriteLine(data);
+
                 }
                 catch (Exception e)
                 {
