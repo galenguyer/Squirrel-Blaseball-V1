@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using NodaTime;
 using Serilog;
 using Serilog.Events;
 using Squirrel.Ingest.Workers;
@@ -35,6 +36,7 @@ namespace Squirrel.Ingest
                         "Squirrel/0.1 (https://github.com/galenguyer/squirrel, MasterChief_John-117#1911 on Discord)");
                     return client;
                 })
+                .AddSingleton<IClock>(SystemClock.Instance)
                 .AddSingleton<EventStream>()
                 .AddSingleton<StreamDataWorker>();
         }

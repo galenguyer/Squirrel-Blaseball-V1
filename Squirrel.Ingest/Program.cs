@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
+using Squirrel.Database;
 using Squirrel.Ingest.Workers;
 
 namespace Squirrel.Ingest
@@ -13,6 +14,7 @@ namespace Squirrel.Ingest
             IServiceProvider services = new ServiceCollection()
                 .AddSerilog()
                 .AddSquirrelIngest()
+                .AddSingleton<MongoDBClient>()
                 .BuildServiceProvider();
 
             await HandleIngest(services);
