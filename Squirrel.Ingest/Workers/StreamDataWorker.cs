@@ -33,14 +33,31 @@ namespace Squirrel.Ingest.Workers
                 try
                 {
                     var doc = JsonDocument.Parse(data);
-                    var update = new RawStreamDataUpdate(_clock.GetCurrentInstant(), doc.RootElement);
-                    await _db.WriteRaw(update);
+                    Instant now = _clock.GetCurrentInstant();
+                    await _db.WriteRaw(now, doc);
+
+                    var games = ExtractGames(doc.RootElement);
+                    if (games != null)
+                        await _db.WriteGame(now, games.Value);
                 }
                 catch (Exception e)
                 {
                     _logger.Error(e, "Error while processing stream data");
                 }
             });
+        }
+        private JsonElement? ExtractGames(JsonElement root)
+        {
+            if (root.TryGetProperty("value", out var valueProp))
+                root = valueProp;
+
+            if (!root.TryGetProperty("games", out var gamesProp))
+            {
+                Log.Warning("Couldn't find games property, skipping line");
+                return null;
+            }
+
+            return gamesProp;
         }
     }
 }

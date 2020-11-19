@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using MongoDb.Bson.NodaTime;
 using MongoDB.Driver;
+using NodaTime;
 using Serilog;
 using Squirrel.Database.Entities;
 
@@ -16,6 +17,7 @@ namespace Squirrel.Database
         ILogger _logger;
 
         IMongoCollection<RawStreamDataUpdate> _rawUpdates;
+        IMongoCollection<GameUpdate> _gameUpdates;
         public MongoDBClient(IServiceProvider services)
         {
             string connectionString = Environment.GetEnvironmentVariable("MONGO_URI");
@@ -28,10 +30,13 @@ namespace Squirrel.Database
 
             var db = _client.GetDatabase("streamData");
             _rawUpdates = db.GetCollection<RawStreamDataUpdate>("raw");
+            _gameUpdates = db.GetCollection<GameUpdate>("games");
         }
 
-        public async Task WriteRaw(RawStreamDataUpdate update)
+        public async Task WriteRaw(Instant instant, JsonDocument doc)
         {
+            var update = new RawStreamDataUpdate(instant, doc.RootElement);
+
             var filter = Builders<RawStreamDataUpdate>.Filter.Eq(x => x.Id, update.Id);
 
             var model = Builders<RawStreamDataUpdate>.Update
@@ -41,6 +46,21 @@ namespace Squirrel.Database
             await _rawUpdates.UpdateOneAsync(filter, model, new UpdateOptions { IsUpsert = true });
 
             _logger.Information("Upserted streamData.raw.{Hash}", update.Id);
+        }
+
+        public async Task WriteGame(Instant instant, JsonElement elem)
+        {
+            var update = new GameUpdate(instant, elem);
+
+            var filter = Builders<GameUpdate>.Filter.Eq(x => x.Id, update.Id);
+
+            var model = Builders<GameUpdate>.Update
+                .SetOnInsert(x => x.Payload, update.Payload)
+                .Min(x => x.FirstSeen, update.FirstSeen)
+                .Max(x => x.LastSeen, update.LastSeen);
+            await _gameUpdates.UpdateOneAsync(filter, model, new UpdateOptions { IsUpsert = true });
+
+            _logger.Information("Upserted streamData.games.{Hash}", update.Id);
         }
     }
 }
