@@ -42,7 +42,7 @@ namespace Squirrel.Ingest.Workers
 
                     var leagues = ExtractLeagues(doc.RootElement);
                     if (leagues.HasValue)
-                        await _db.WriteLeagues(new, leagues.Value);
+                        await _db.WriteLeagues(now, leagues.Value);
                 }
                 catch (Exception e)
                 {
