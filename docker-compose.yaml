@@ -19,7 +19,7 @@ services:
   squirrel:
     build: .
     environment:
-      - "MONGO_URI=mongodb://streamdata:${BLASEBALL_STREAMDATA_MONGO_PW}@squirrel-mongo"
+      - "MONGO_URI=mongodb://streamdata:${SQUIRREL_MONGO_PASSWORD}@squirrel-mongo"
     networks:
       - squirrel
 
