@@ -17,7 +17,8 @@ namespace Squirrel.Database
         ILogger _logger;
 
         IMongoCollection<RawStreamDataUpdate> _rawUpdates;
-        IMongoCollection<GameUpdate> _gameUpdates;
+        IMongoCollection<GamesUpdate> _gameUpdates;
+        IMongoCollection<LeaguesUpdate> _leaguesUpdates;
         public MongoDBClient(IServiceProvider services)
         {
             string connectionString = Environment.GetEnvironmentVariable("MONGO_URI");
@@ -30,7 +31,8 @@ namespace Squirrel.Database
 
             var db = _client.GetDatabase("streamData");
             _rawUpdates = db.GetCollection<RawStreamDataUpdate>("raw");
-            _gameUpdates = db.GetCollection<GameUpdate>("games");
+            _gameUpdates = db.GetCollection<GamesUpdate>("games");
+            _leaguesUpdates = db.GetCollection<LeaguesUpdate>("leagues");
         }
 
         public async Task WriteRaw(Instant instant, JsonDocument doc)
@@ -50,17 +52,32 @@ namespace Squirrel.Database
 
         public async Task WriteGame(Instant instant, JsonElement elem)
         {
-            var update = new GameUpdate(instant, elem);
+            var update = new GamesUpdate(instant, elem);
 
-            var filter = Builders<GameUpdate>.Filter.Eq(x => x.Id, update.Id);
+            var filter = Builders<GamesUpdate>.Filter.Eq(x => x.Id, update.Id);
 
-            var model = Builders<GameUpdate>.Update
+            var model = Builders<GamesUpdate>.Update
                 .SetOnInsert(x => x.Payload, update.Payload)
                 .Min(x => x.FirstSeen, update.FirstSeen)
                 .Max(x => x.LastSeen, update.LastSeen);
             await _gameUpdates.UpdateOneAsync(filter, model, new UpdateOptions { IsUpsert = true });
 
             _logger.Information("Upserted streamData.games.{Hash}", update.Id);
+        }
+
+        public async Task WriteLeagues(Instant instant, JsonElement elem)
+        {
+            var update = new LeaguesUpdate(instant, elem);
+
+            var filter = Builders<LeaguesUpdate>.Filter.Eq(x => x.Id, update.Id);
+
+            var model = Builders<LeaguesUpdate>.Update
+                .SetOnInsert(x => x.Payload, update.Payload)
+                .Min(x => x.FirstSeen, update.FirstSeen)
+                .Max(x => x.LastSeen, update.LastSeen);
+            await _leaguesUpdates.UpdateOneAsync(filter, model, new UpdateOptions { IsUpsert = true });
+
+            _logger.Information("Upserted streamData.leagues.{Hash}", update.Id);
         }
     }
 }

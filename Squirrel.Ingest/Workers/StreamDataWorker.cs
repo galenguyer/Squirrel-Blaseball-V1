@@ -37,8 +37,12 @@ namespace Squirrel.Ingest.Workers
                     await _db.WriteRaw(now, doc);
 
                     var games = ExtractGames(doc.RootElement);
-                    if (games != null)
+                    if (games.HasValue)
                         await _db.WriteGame(now, games.Value);
+
+                    var leagues = ExtractLeagues(doc.RootElement);
+                    if (leagues.HasValue)
+                        await _db.WriteLeagues(new, leagues.Value);
                 }
                 catch (Exception e)
                 {
@@ -58,6 +62,19 @@ namespace Squirrel.Ingest.Workers
             }
 
             return gamesProp;
+        }
+        private JsonElement? ExtractLeagues(JsonElement root)
+        {
+            if (root.TryGetProperty("value", out var valueProp))
+                root = valueProp;
+
+            if (!root.TryGetProperty("leagues", out var leaguesProp))
+            {
+                Log.Warning("Couldn't find leagues property, skipping line");
+                return null;
+            }
+
+            return leaguesProp;
         }
     }
 }
