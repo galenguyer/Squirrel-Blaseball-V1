@@ -6,7 +6,11 @@ ADD  Squirrel.Database/Squirrel.Database.csproj Squirrel.Database/
 ADD  Squirrel.Ingest/Squirrel.Ingest.csproj Squirrel.Ingest/
 ADD Squirrel.sln .
 
-RUN dotnet restore && dotnet publish -c Release -r linux-musl-x64
+RUN dotnet restore 
+
+ADD . .
+
+RUN dotnet publish -c Release -r linux-musl-x64
 
 
 FROM mcr.microsoft.com/dotnet/core/runtime-deps:3.1-alpine3.11
